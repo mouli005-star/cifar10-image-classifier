@@ -32,7 +32,7 @@ This app demonstrates:
 """)
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("👨‍💻 Built for learning & interviews")
+st.sidebar.markdown("👨‍💻 Built for learning & knowledge")
 
 # ---------------- Main Title ----------------
 st.markdown(
