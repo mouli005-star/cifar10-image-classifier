@@ -4,64 +4,54 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models, transforms
 from PIL import Image
-# ---------------- Page configuration ----------------
+
+# ---------------- Page Config ----------------
 st.set_page_config(
     page_title="CIFAR-10 Image Classifier",
     page_icon="🧠",
-    layout="centered"
+    layout="wide"
 )
-st.markdown("""
-<style>
-.block-container {
-    padding-top: 2rem;
-}
-.pred-box {
-    background-color: #0f172a;
-    padding: 1.2rem;
-    border-radius: 12px;
-    border: 1px solid #1e293b;
-    margin-top: 1rem;
-}
-</style>
-""", unsafe_allow_html=True)
-st.markdown("""
-<div style="text-align:center; margin-bottom:2rem;">
-    <h1>🧠 CIFAR-10 Image Classifier</h1>
-    <p style="color:#94a3b8;">
-        Upload an image and see how a deep learning model classifies it
-    </p>
-</div>
-""", unsafe_allow_html=True)
-st.markdown("""
-### 📌 What is this app?
 
-This is a **deep learning demo** built using **PyTorch** and **ResNet-18**.
-The model is trained on the **CIFAR-10 dataset**, which contains images of
-common objects.
+# ---------------- Sidebar ----------------
+st.sidebar.title("🧠 CIFAR-10 Classifier")
+st.sidebar.markdown("""
+**End-to-End Deep Learning Project**
 
-The model can classify images into **10 categories**:
+This app demonstrates:
+- CNN + Transfer Learning
+- PyTorch model training
+- Real-world deployment
+
+**Model**
+- ResNet-18
+- Fine-tuned on CIFAR-10
+
+**Dataset**
+- 60,000 images
+- 10 classes
 """)
 
-st.markdown("""
-✈️ Airplane · 🚗 Car · 🐦 Bird · 🐱 Cat · 🦌 Deer  
-🐶 Dog · 🐸 Frog · 🐴 Horse · 🚢 Ship · 🚚 Truck
-""")
-st.markdown("""
-### 🧪 How to use
+st.sidebar.markdown("---")
+st.sidebar.markdown("👨‍💻 Built for learning & interviews")
 
-1. Upload an image (JPG / PNG)
-2. The model analyzes the image
-3. You will see:
-   - Predicted class
-   - Confidence score
+# ---------------- Main Title ----------------
+st.markdown(
+    "<h1 style='text-align:center;'>🖼️ CIFAR-10 Image Classifier</h1>",
+    unsafe_allow_html=True
+)
+st.markdown(
+    "<p style='text-align:center;color:#94a3b8;'>Upload an image and see how a deep learning model classifies it</p>",
+    unsafe_allow_html=True
+)
+st.markdown("---")
 
-💡 Tip: Clear images with one main object work best.
-""")
+# ---------------- Class Labels ----------------
 classes = [
     'airplane','car','bird','cat','deer',
     'dog','frog','horse','ship','truck'
 ]
 
+# ---------------- Load Model ----------------
 @st.cache_resource
 def load_model():
     model = models.resnet18(pretrained=False)
@@ -73,6 +63,8 @@ def load_model():
     return model
 
 model = load_model()
+
+# ---------------- Image Transform ----------------
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -81,40 +73,66 @@ transform = transforms.Compose([
         std=(0.229, 0.224, 0.225)
     )
 ])
-st.markdown("### 📤 Try it yourself")
 
-uploaded_file = st.file_uploader(
-    "Upload an image (JPG / PNG)",
-    type=["jpg", "png", "jpeg"]
-)
-if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert("RGB")
+# ---------------- Layout ----------------
+left_col, right_col = st.columns([1, 1])
 
-    st.image(image, caption="Uploaded Image", width=300)
+# ---------------- Left Column (Explanation) ----------------
+with left_col:
+    st.subheader("📌 What does this model do?")
+    st.markdown("""
+    This deep learning model classifies images into **10 everyday objects**
+    using a **Convolutional Neural Network (CNN)**.
+    """)
 
-    img_tensor = transform(image).unsqueeze(0)
+    st.markdown("### 🏷️ Supported Classes")
+    st.markdown("""
+    ✈️ Airplane  
+    🚗 Car  
+    🐦 Bird  
+    🐱 Cat  
+    🦌 Deer  
+    🐶 Dog  
+    🐸 Frog  
+    🐴 Horse  
+    🚢 Ship  
+    🚚 Truck  
+    """)
 
-    with torch.no_grad():
-        outputs = model(img_tensor)
-        probs = F.softmax(outputs, dim=1)
-        confidence, pred = torch.max(probs, dim=1)
+    st.markdown("### 💡 Tips")
+    st.info("Use clear images with a single main object for best results.")
 
-    st.markdown(
-        f"""
-        <div class="pred-box">
-            <h3>🧠 Prediction Result</h3>
-            <p><b>Class:</b> <span style="color:#38bdf8">{classes[pred.item()]}</span></p>
-            <p><b>Confidence:</b> {confidence.item()*100:.2f}%</p>
-        </div>
-        """,
-        unsafe_allow_html=True
+# ---------------- Right Column (Interaction) ----------------
+with right_col:
+    st.subheader("📤 Try it yourself")
+
+    uploaded_file = st.file_uploader(
+        "Upload an image (JPG / PNG)",
+        type=["jpg", "png", "jpeg"]
     )
 
-else:
-    st.info("👆 Upload an image to get started")
-st.markdown("""
----
-<p style="text-align:center; color:#64748b;">
-End-to-end ML project • Training → Evaluation → Deployment
-</p>
-""", unsafe_allow_html=True)
+    if uploaded_file:
+        image = Image.open(uploaded_file).convert("RGB")
+        st.image(image, caption="Uploaded Image", use_column_width=True)
+
+        img_tensor = transform(image).unsqueeze(0)
+
+        with torch.no_grad():
+            outputs = model(img_tensor)
+            probs = F.softmax(outputs, dim=1)
+            confidence, pred = torch.max(probs, dim=1)
+
+        st.markdown("### 🧠 Prediction Result")
+        st.success(f"**Class:** {classes[pred.item()]}")
+        st.progress(confidence.item())
+        st.caption(f"Confidence: {confidence.item()*100:.2f}%")
+
+    else:
+        st.info("👆 Upload an image to see prediction")
+
+# ---------------- Footer ----------------
+st.markdown("---")
+st.markdown(
+    "<p style='text-align:center;color:#64748b;'>End-to-End ML Project • Training → Evaluation → Deployment</p>",
+    unsafe_allow_html=True
+)
