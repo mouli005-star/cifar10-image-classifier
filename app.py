@@ -1,29 +1,22 @@
 import streamlit as st
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torchvision import models, transforms
 from PIL import Image
-import torch.nn.functional as F
-
-# ---------------- Page config ----------------
+# ---------------- Page configuration ----------------
 st.set_page_config(
-    page_title="CIFAR-10 Classifier",
+    page_title="CIFAR-10 Image Classifier",
     page_icon="🧠",
     layout="centered"
 )
-
-# ---------------- Custom CSS ----------------
 st.markdown("""
 <style>
-.main {
-    background-color: #0f172a;
-    color: white;
-}
 .block-container {
     padding-top: 2rem;
 }
 .pred-box {
-    background-color: #020617;
+    background-color: #0f172a;
     padding: 1.2rem;
     border-radius: 12px;
     border: 1px solid #1e293b;
@@ -31,30 +24,55 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<div style="text-align:center; margin-bottom:2rem;">
+    <h1>🧠 CIFAR-10 Image Classifier</h1>
+    <p style="color:#94a3b8;">
+        Upload an image and see how a deep learning model classifies it
+    </p>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("""
+### 📌 What is this app?
 
-# ---------------- Title ----------------
-st.markdown("<h1 style='text-align:center;'>🖼️ CIFAR-10 Image Classifier</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;color:#94a3b8;'>Upload an image and let the model predict its class</p>", unsafe_allow_html=True)
-st.divider()
+This is a **deep learning demo** built using **PyTorch** and **ResNet-18**.
+The model is trained on the **CIFAR-10 dataset**, which contains images of
+common objects.
 
-# ---------------- Class labels ----------------
+The model can classify images into **10 categories**:
+""")
+
+st.markdown("""
+✈️ Airplane · 🚗 Car · 🐦 Bird · 🐱 Cat · 🦌 Deer  
+🐶 Dog · 🐸 Frog · 🐴 Horse · 🚢 Ship · 🚚 Truck
+""")
+st.markdown("""
+### 🧪 How to use
+
+1. Upload an image (JPG / PNG)
+2. The model analyzes the image
+3. You will see:
+   - Predicted class
+   - Confidence score
+
+💡 Tip: Clear images with one main object work best.
+""")
 classes = [
     'airplane','car','bird','cat','deer',
     'dog','frog','horse','ship','truck'
 ]
 
-# ---------------- Load model ----------------
 @st.cache_resource
 def load_model():
     model = models.resnet18(pretrained=False)
     model.fc = nn.Linear(model.fc.in_features, 10)
-    model.load_state_dict(torch.load("resnet18_cifar10.pth", map_location="cpu"))
+    model.load_state_dict(
+        torch.load("resnet18_cifar10.pth", map_location="cpu")
+    )
     model.eval()
     return model
 
 model = load_model()
-
-# ---------------- Image preprocessing ----------------
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -63,22 +81,16 @@ transform = transforms.Compose([
         std=(0.229, 0.224, 0.225)
     )
 ])
+st.markdown("### 📤 Try it yourself")
 
-# ---------------- File uploader ----------------
 uploaded_file = st.file_uploader(
-    "📤 Upload an image (JPG / PNG)",
+    "Upload an image (JPG / PNG)",
     type=["jpg", "png", "jpeg"]
 )
-
-# ---------------- Prediction ----------------
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
 
-    st.image(
-        image,
-        caption="Uploaded Image",
-        width=320
-    )
+    st.image(image, caption="Uploaded Image", width=300)
 
     img_tensor = transform(image).unsqueeze(0)
 
@@ -90,8 +102,9 @@ if uploaded_file is not None:
     st.markdown(
         f"""
         <div class="pred-box">
-            <h3>Prediction: <span style="color:#38bdf8">{classes[pred.item()]}</span></h3>
-            <p>Confidence: <b>{confidence.item()*100:.2f}%</b></p>
+            <h3>🧠 Prediction Result</h3>
+            <p><b>Class:</b> <span style="color:#38bdf8">{classes[pred.item()]}</span></p>
+            <p><b>Confidence:</b> {confidence.item()*100:.2f}%</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -99,3 +112,9 @@ if uploaded_file is not None:
 
 else:
     st.info("👆 Upload an image to get started")
+st.markdown("""
+---
+<p style="text-align:center; color:#64748b;">
+End-to-end ML project • Training → Evaluation → Deployment
+</p>
+""", unsafe_allow_html=True)
